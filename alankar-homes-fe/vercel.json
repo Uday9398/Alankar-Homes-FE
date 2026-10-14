@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/api/v1/:path*", "destination": "https://alankar-homes-be-1.onrender.com/api/v1/:path*" },
+    { "source": "/uploads/:path*", "destination": "https://alankar-homes-be-1.onrender.com/uploads/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
