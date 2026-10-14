@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Cinzel', Georgia, serif;
+  --font-sans: 'Inter', sans-serif;
+
+  /* Popup entrance */
+  --animate-backdrop-in: backdrop-in 0.2s ease-out;
+  --animate-dialog-in: dialog-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-backdrop-in,
+  .animate-dialog-in {
+    animation: none;
+  }
+}
+
+@layer base {
+  body {
+    @apply antialiased bg-[#00110f] text-stone-200;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Custom background radial gradient */
+.bg-radial-teal {
+  background: radial-gradient(circle at 50% 25%, #084c41 0%, #011e1a 50%, #000c0a 100%);
+}
+
+/* Custom gold gradient for premium buttons */
+.bg-gold-gradient {
+  background: linear-gradient(180deg, #ecc588 0%, #caa060 100%);
+}
+
+.bg-gold-gradient:hover {
+  background: linear-gradient(180deg, #f4d49d 0%, #dab477 100%);
+}
+
+/* Glassmorphism card outline and background */
+.glass-card {
+  background: rgba(1, 23, 20, 0.65);
+  border: 1px solid rgba(14, 63, 56, 0.7);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Custom styling for inputs */
+.input-field {
+  background-color: rgba(0, 15, 13, 0.4);
+  border: 1px solid rgba(14, 63, 56, 0.95);
+  transition: all 0.2s ease-in-out;
+}
+
+.input-field:focus {
+  border-color: rgba(202, 160, 96, 0.7);
+  box-shadow: 0 0 0 2px rgba(202, 160, 96, 0.15);
+  outline: none;
+}
