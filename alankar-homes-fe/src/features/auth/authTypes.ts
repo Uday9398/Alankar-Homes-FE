@@ -8,7 +8,6 @@ export interface User {
 
 export interface AuthState {
   user: User | null;
-  token: string | null;
   isLoading: boolean;
   error: string | null;
   successMessage: string | null;
@@ -18,7 +17,6 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   data: {
-    token: string;
     user: User;
   };
 }

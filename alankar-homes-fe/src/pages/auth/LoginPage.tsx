@@ -9,7 +9,7 @@ import { ROUTES } from '../../utils/constants';
 export const LoginPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const { isLoading, error, user, token } = useAppSelector((state) => state.auth);
+  const { isLoading, error, user } = useAppSelector((state) => state.auth);
   // Where to go after signing in, e.g. back to checkout
   const from = (location.state as { from?: string } | null)?.from || ROUTES.HOME;
 
@@ -21,7 +21,7 @@ export const LoginPage: React.FC = () => {
     dispatch(loginThunk(data));
   };
 
-  if (user && token) {
+  if (user) {
     return <Navigate to={from} replace />;
   }
 

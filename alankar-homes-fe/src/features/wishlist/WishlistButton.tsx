@@ -16,7 +16,7 @@ export const WishlistButton: React.FC<WishlistButtonProps> = ({ productId, varia
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const signedIn = useAppSelector((state) => Boolean(state.auth.user && state.auth.token));
+  const signedIn = useAppSelector((state) => Boolean(state.auth.user));
   const saved = useAppSelector((state) => state.wishlist.ids.includes(productId));
 
   const handleClick = (e: React.MouseEvent) => {

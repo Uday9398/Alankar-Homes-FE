@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Heart, LayoutDashboard, LogOut, Menu, Package, ShoppingBag, Sparkles, User, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { logout, setUser } from '../../features/auth/authSlice';
+import { logoutThunk, setUser } from '../../features/auth/authSlice';
 import { loadWishlist } from '../../features/wishlist/wishlistSlice';
 import api from '../../services/api';
 import { Logo } from '../common/Logo';
@@ -40,7 +40,7 @@ export const MainLayout: React.FC = () => {
   }, [userId, dispatch]);
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logoutThunk());
     navigate(ROUTES.HOME);
   };
 

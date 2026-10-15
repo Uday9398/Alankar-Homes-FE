@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, Heart, IndianRupee, KeyRound, LogOut, MapPin, Package, Pencil, Sparkles, UserRound } from 'lucide-react';
 import { useAppDispatch } from '../../app/hooks';
-import { logout, setUser } from '../../features/auth/authSlice';
+import { logoutThunk, setUser } from '../../features/auth/authSlice';
 import { useAsync } from '../../hooks/useAsync';
 import { changePassword, fetchProfile, updateProfile } from '../../features/shop/shopService';
 import type { Profile } from '../../features/shop/shopTypes';
@@ -210,7 +210,7 @@ export const ProfilePage: React.FC = () => {
   const { user, stats, lastAddress, recentOrders, recentCustomRequests } = profile;
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logoutThunk());
     navigate(ROUTES.HOME);
   };
 

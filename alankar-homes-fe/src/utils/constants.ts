@@ -27,6 +27,7 @@ export const ROUTES = {
 export const API_ENDPOINTS = {
   LOGIN: '/login',
   REGISTER: '/register',
+  LOGOUT: '/logout',
   ME: '/me',
   PROFILE: '/users/profile',
   PRODUCTS: '/products',
@@ -39,7 +40,7 @@ export const API_ENDPOINTS = {
 };
 
 export const STORAGE_KEYS = {
-  TOKEN: 'alankar_auth_token',
+  LEGACY_TOKEN: 'alankar_auth_token',
   USER: 'alankar_user',
   CART: 'alankar_cart',
 };
