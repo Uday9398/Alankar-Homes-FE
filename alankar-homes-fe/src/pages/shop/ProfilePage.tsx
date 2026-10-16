@@ -6,13 +6,14 @@ import { logoutThunk, setUser } from '../../features/auth/authSlice';
 import { useAsync } from '../../hooks/useAsync';
 import { changePassword, fetchProfile, updateProfile } from '../../features/shop/shopService';
 import type { Profile } from '../../features/shop/shopTypes';
-import { CustomStatusBadge, ErrorMessage, Spinner, StatusBadge, SuccessMessage } from '../../components/common/Feedback';
+import { CustomStatusBadge, ErrorMessage, Spinner, StatusBadge } from '../../components/common/Feedback';
 import { ProductImage } from '../../components/common/ProductImage';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { AddressBook } from '../../components/address/AddressBook';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { getErrorMessage } from '../../utils/helpers';
+import { useToast } from '../../hooks/useFeedback';
 import { ROUTES } from '../../utils/constants';
 
 const labelClass = 'text-[10px] font-bold tracking-widest text-[#8ba5a0] uppercase';
@@ -29,15 +30,12 @@ const PersonalDetails: React.FC<{ user: Profile['user']; onSaved: (user: Profile
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: user.name, phone: user.phone });
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const toast = useToast();
 
   const startEditing = () => {
     setForm({ name: user.name, phone: user.phone });
     setErrors({});
-    setError(null);
-    setMessage(null);
     setEditing(true);
   };
 
@@ -50,16 +48,15 @@ const PersonalDetails: React.FC<{ user: Profile['user']; onSaved: (user: Profile
     if (Object.keys(newErrors).length > 0) return;
 
     setIsSaving(true);
-    setError(null);
     try {
       const result = await updateProfile({ name: form.name.trim(), phone: form.phone.trim() });
       onSaved(result.data);
       // Keeps the header greeting and checkout prefill in step with the new details
       dispatch(setUser({ id: result.data.id, name: result.data.name, email: result.data.email, phone: result.data.phone, role: result.data.role }));
-      setMessage(result.message);
+      toast.success(result.message);
       setEditing(false);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -76,15 +73,12 @@ const PersonalDetails: React.FC<{ user: Profile['user']; onSaved: (user: Profile
         )}
       </div>
 
-      {message && <SuccessMessage message={message} />}
-
       {editing ? (
         <form onSubmit={handleSave} className="space-y-4 pt-1">
           <Input label="Full name" value={form.name} error={errors.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} />
           <Input label="Phone" type="tel" value={form.phone} error={errors.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} />
           <Input label="Email" value={user.email} disabled className="opacity-60 cursor-not-allowed" />
           <p className="text-[11px] text-stone-500 -mt-2">Your email is your sign-in, so it can't be changed here.</p>
-          {error && <ErrorMessage message={error} />}
           <div className="flex gap-3">
             <Button type="submit" isLoading={isSaving} className="sm:w-auto sm:px-8">Save</Button>
             <Button type="button" variant="outline" onClick={() => setEditing(false)} className="sm:w-auto sm:px-8">Cancel</Button>
@@ -109,9 +103,8 @@ const ChangePassword: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_PASSWORDS);
   const [errors, setErrors] = useState<Partial<typeof EMPTY_PASSWORDS>>({});
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const toast = useToast();
 
   const field = (name: keyof typeof EMPTY_PASSWORDS) => ({
     type: 'password',
@@ -133,14 +126,13 @@ const ChangePassword: React.FC = () => {
     if (Object.keys(newErrors).length > 0) return;
 
     setIsSaving(true);
-    setError(null);
     try {
       const result = await changePassword(form);
-      setMessage(result.message);
+      toast.success(result.message);
       setForm(EMPTY_PASSWORDS);
       setOpen(false);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -152,23 +144,18 @@ const ChangePassword: React.FC = () => {
         <h2 className={`${labelClass} flex items-center gap-2`}><KeyRound className="w-4 h-4" /> Password</h2>
         {!open && (
           <button
-            onClick={() => {
-              setOpen(true);
-              setMessage(null);
-            }}
+            onClick={() => setOpen(true)}
             className="text-xs font-semibold text-[#caa060] hover:text-[#ecc588] cursor-pointer"
           >
             Change password
           </button>
         )}
       </div>
-      {message && <SuccessMessage message={message} />}
       {open ? (
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           <Input label="Current password" autoComplete="current-password" {...field('currentPassword')} />
           <Input label="New password" autoComplete="new-password" placeholder="At least 8 characters" {...field('newPassword')} />
           <Input label="Confirm new password" autoComplete="new-password" {...field('confirmPassword')} />
-          {error && <ErrorMessage message={error} />}
           <div className="flex gap-3">
             <Button type="submit" isLoading={isSaving} className="sm:w-auto sm:px-8">Update password</Button>
             <Button
@@ -178,7 +165,6 @@ const ChangePassword: React.FC = () => {
                 setOpen(false);
                 setForm(EMPTY_PASSWORDS);
                 setErrors({});
-                setError(null);
               }}
               className="sm:w-auto sm:px-8"
             >
@@ -187,7 +173,7 @@ const ChangePassword: React.FC = () => {
           </div>
         </form>
       ) : (
-        !message && <p className="text-sm text-stone-400">••••••••</p>
+        <p className="text-sm text-stone-400">••••••••</p>
       )}
     </section>
   );

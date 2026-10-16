@@ -7,38 +7,37 @@ import { ErrorMessage, Spinner } from '../../components/common/Feedback';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { getErrorMessage } from '../../utils/helpers';
+import { useConfirm, useToast } from '../../hooks/useFeedback';
 
 export const AdminCategoriesPage: React.FC = () => {
   const { data: categories, isLoading, error, reload } = useAsync(fetchCategories, []);
   const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const resetForm = () => {
     setEditing(null);
     setName('');
     setDescription('');
-    setFormError(null);
   };
 
   const startEdit = (category: Category) => {
     setEditing(category);
     setName(category.name);
     setDescription(category.description || '');
-    setFormError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim().length < 2) {
-      setFormError('Category name must be at least 2 characters');
+      toast.error('Category name must be at least 2 characters');
       return;
     }
     setIsSaving(true);
-    setFormError(null);
     try {
       const data = { name: name.trim(), description: description.trim() };
       if (editing) {
@@ -46,10 +45,11 @@ export const AdminCategoriesPage: React.FC = () => {
       } else {
         await createCategory(data);
       }
+      toast.success(editing ? 'Category updated' : 'Category added');
       resetForm();
       reload();
     } catch (err) {
-      setFormError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -57,14 +57,20 @@ export const AdminCategoriesPage: React.FC = () => {
 
   const handleDelete = async (category: Category) => {
     const count = category.productCount || 0;
-    const warning = count > 0 ? `\n\nIts ${count} product(s) will stay in the shop without a category.` : '';
-    if (!window.confirm(`Delete the "${category.name}" category?${warning}`)) return;
+    const ok = await confirm({
+      title: `Delete the "${category.name}" category?`,
+      message: count > 0 ? `Its ${count} product(s) will stay in the shop without a category.` : undefined,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await deleteCategory(category.id);
       if (editing?.id === category.id) resetForm();
+      toast.success('Category deleted');
       reload();
     } catch (err) {
-      setFormError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -79,7 +85,6 @@ export const AdminCategoriesPage: React.FC = () => {
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Hand-poured soy candles"
         />
-        {formError && <ErrorMessage message={formError} />}
         <Button type="submit" isLoading={isSaving}>{editing ? 'Save category' : 'Add category'}</Button>
         {editing && (
           <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>

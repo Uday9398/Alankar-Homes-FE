@@ -24,12 +24,6 @@ export const ErrorMessage: React.FC<{ message: string; onRetry?: () => void }> =
   </div>
 );
 
-export const SuccessMessage: React.FC<{ message: string }> = ({ message }) => (
-  <div className="text-emerald-400 text-sm bg-emerald-950/45 border border-emerald-900/60 p-4 rounded-lg text-left">
-    {message}
-  </div>
-);
-
 export const EmptyState: React.FC<{ icon: React.ReactNode; title: string; children?: React.ReactNode }> = ({
   icon,
   title,

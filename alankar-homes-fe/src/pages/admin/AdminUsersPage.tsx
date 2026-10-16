@@ -1,13 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Check, Mail, Phone, Search, ShieldCheck, ShieldOff } from 'lucide-react';
 import { useAsync } from '../../hooks/useAsync';
 import { useAppSelector } from '../../app/hooks';
 import { adminFetchUsers, updateUserRole } from '../../features/shop/shopService';
 import type { AdminUser, UserRole } from '../../features/shop/shopTypes';
-import { ErrorMessage, Spinner, SuccessMessage } from '../../components/common/Feedback';
+import { ErrorMessage, Spinner } from '../../components/common/Feedback';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { getErrorMessage } from '../../utils/helpers';
+import { useToast } from '../../hooks/useFeedback';
 
 const ADMIN_POWERS = [
   'Add, edit and delete products and photos',
@@ -30,14 +31,7 @@ export const AdminUsersPage: React.FC = () => {
   const [pending, setPending] = useState<{ user: AdminUser; role: UserRole } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  // Hide the message after 3 seconds; a newer message restarts the timer
-  useEffect(() => {
-    if (!notice) return;
-    const timer = setTimeout(() => setNotice(null), 3000);
-    return () => clearTimeout(timer);
-  }, [notice]);
+  const toast = useToast();
 
   const { data, isLoading, error, reload } = useAsync(
     () => adminFetchUsers({ search: search.trim() || undefined, role, page }),
@@ -55,11 +49,10 @@ export const AdminUsersPage: React.FC = () => {
     if (!pending) return;
     setIsSaving(true);
     setDialogError(null);
-    setNotice(null);
     try {
       const result = await updateUserRole(pending.user.id, pending.role);
       setPending(null);
-      setNotice({ type: 'success', text: result.message });
+      toast.success(result.message);
       // Reload so the counts at the top stay correct
       reload();
     } catch (err) {
@@ -126,7 +119,6 @@ export const AdminUsersPage: React.FC = () => {
         </div>
       </div>
 
-      {notice && (notice.type === 'success' ? <SuccessMessage message={notice.text} /> : <ErrorMessage message={notice.text} />)}
       {isLoading && <Spinner />}
       {error && <ErrorMessage message={error} onRetry={reload} />}
 

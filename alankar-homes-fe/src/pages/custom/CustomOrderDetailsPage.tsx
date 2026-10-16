@@ -9,6 +9,7 @@ import { ProductImage } from '../../components/common/ProductImage';
 import { Button } from '../../components/common/Button';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { getErrorMessage } from '../../utils/helpers';
+import { useConfirm, useToast } from '../../hooks/useFeedback';
 import { CUSTOM_STATUS_LABELS, ROUTES } from '../../utils/constants';
 
 const STEPS: CustomRequestStatus[] = ['pending', 'quoted', 'accepted', 'in_progress', 'shipped', 'delivered'];
@@ -45,7 +46,8 @@ export const CustomOrderDetailsPage: React.FC = () => {
   const location = useLocation();
   const justSent = (location.state as { justSent?: boolean } | null)?.justSent;
   const { data: request, setData, isLoading, error } = useAsync(() => fetchCustomRequest(id!), [id]);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const toast = useToast();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState<'accept' | 'cancel' | null>(null);
 
   if (isLoading) return <Spinner />;
@@ -60,18 +62,19 @@ export const CustomOrderDetailsPage: React.FC = () => {
 
   const run = async (action: 'accept' | 'cancel', call: (id: number) => Promise<CustomRequest>) => {
     setBusy(action);
-    setActionError(null);
     try {
       setData(await call(request.id));
+      toast.success(action === 'accept' ? "Price accepted, we'll start making it soon" : 'Your request has been cancelled');
     } catch (err) {
-      setActionError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     } finally {
       setBusy(null);
     }
   };
 
-  const handleCancel = () => {
-    if (window.confirm('Cancel this custom request?')) run('cancel', cancelCustomRequest);
+  const handleCancel = async () => {
+    const ok = await confirm({ title: 'Cancel this custom request?', confirmLabel: 'Cancel request', cancelLabel: 'Keep request', tone: 'danger' });
+    if (ok) run('cancel', cancelCustomRequest);
   };
 
   const canCancel = request.status === 'pending' || request.status === 'quoted';
@@ -167,8 +170,6 @@ export const CustomOrderDetailsPage: React.FC = () => {
           {request.shippingAddress}, {request.shippingCity}, {request.shippingState} – {request.shippingPincode}
         </p>
       </div>
-
-      {actionError && <ErrorMessage message={actionError} />}
 
       {canCancel && (
         <button

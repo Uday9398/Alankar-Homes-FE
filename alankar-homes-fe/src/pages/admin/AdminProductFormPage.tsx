@@ -15,6 +15,7 @@ import { ProductImage } from '../../components/common/ProductImage';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { getErrorMessage } from '../../utils/helpers';
+import { useToast } from '../../hooks/useFeedback';
 import { ROUTES } from '../../utils/constants';
 
 const MAX_IMAGES = 8;
@@ -57,7 +58,7 @@ export const AdminProductFormPage: React.FC = () => {
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const toast = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -147,16 +148,16 @@ export const AdminProductFormPage: React.FC = () => {
     if (!payload) return;
 
     setIsSaving(true);
-    setSubmitError(null);
     try {
       if (isEdit) {
         await updateProduct(Number(id), payload);
       } else {
         await createProduct(payload);
       }
+      toast.success(isEdit ? 'Product updated' : 'Product added');
       navigate(ROUTES.ADMIN_PRODUCTS);
     } catch (err) {
-      setSubmitError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
       setIsSaving(false);
     }
   };
@@ -338,7 +339,6 @@ export const AdminProductFormPage: React.FC = () => {
           </label>
         </section>
 
-        {submitError && <ErrorMessage message={submitError} />}
 
         <div className="flex flex-col sm:flex-row gap-3">
           <Button type="submit" isLoading={isSaving} disabled={isUploading} className="sm:w-auto sm:px-10">

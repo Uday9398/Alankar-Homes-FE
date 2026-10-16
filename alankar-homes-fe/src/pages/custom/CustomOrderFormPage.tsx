@@ -4,7 +4,6 @@ import { ArrowLeft, ImagePlus, X } from 'lucide-react';
 import { useAppSelector } from '../../app/hooks';
 import { createAddress, submitCustomRequest, uploadReferenceImages } from '../../features/shop/shopService';
 import type { Address } from '../../features/shop/shopTypes';
-import { ErrorMessage } from '../../components/common/Feedback';
 import { ProductImage } from '../../components/common/ProductImage';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
@@ -12,6 +11,7 @@ import { AddressInputs } from '../../components/address/AddressInputs';
 import { AddressPicker, SaveAddressOption } from '../../components/address/AddressPicker';
 import { emptyAddress, pickAddress, trimAddress, validateAddress } from '../../components/address/addressUtils';
 import { getErrorMessage } from '../../utils/helpers';
+import { useToast } from '../../hooks/useFeedback';
 import { ROUTES } from '../../utils/constants';
 
 const MAX_IMAGES = 5;
@@ -70,7 +70,7 @@ export const CustomOrderFormPage: React.FC = () => {
   const [addressLabel, setAddressLabel] = useState('Home');
   const [images, setImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<Partial<Record<TextField | 'images', string>>>({});
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const toast = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -123,7 +123,6 @@ export const CustomOrderFormPage: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    setSubmitError(null);
     try {
       const request = await submitCustomRequest({
         title: form.title.trim(),
@@ -140,7 +139,7 @@ export const CustomOrderFormPage: React.FC = () => {
       }
       navigate(`${ROUTES.CUSTOM_ORDERS}/${request.id}`, { replace: true, state: { justSent: true } });
     } catch (err) {
-      setSubmitError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
       setIsSubmitting(false);
     }
   };
@@ -251,7 +250,6 @@ export const CustomOrderFormPage: React.FC = () => {
           <p className="text-xs text-stone-500">We may call you on this number to talk through the details.</p>
         </section>
 
-        {submitError && <ErrorMessage message={submitError} />}
 
         <Button type="submit" isLoading={isSubmitting} disabled={isUploading || addressId === undefined} className="sm:w-auto sm:px-10">
           Send request

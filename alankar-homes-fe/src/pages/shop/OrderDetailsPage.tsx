@@ -8,6 +8,7 @@ import { ProductImage } from '../../components/common/ProductImage';
 import { OrderProgress } from '../../features/shop/components/OrderProgress';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { getErrorMessage } from '../../utils/helpers';
+import { useConfirm, useToast } from '../../hooks/useFeedback';
 import { ROUTES } from '../../utils/constants';
 
 export const OrderDetailsPage: React.FC = () => {
@@ -15,8 +16,9 @@ export const OrderDetailsPage: React.FC = () => {
   const location = useLocation();
   const justPlaced = (location.state as { justPlaced?: boolean } | null)?.justPlaced;
   const { data: order, setData, isLoading, error } = useAsync(() => fetchOrder(id!), [id]);
-  const [cancelError, setCancelError] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   if (isLoading) return <Spinner />;
   if (error || !order) {
@@ -29,13 +31,14 @@ export const OrderDetailsPage: React.FC = () => {
   }
 
   const handleCancel = async () => {
-    if (!window.confirm('Cancel this order?')) return;
+    const ok = await confirm({ title: 'Cancel this order?', confirmLabel: 'Cancel order', cancelLabel: 'Keep order', tone: 'danger' });
+    if (!ok) return;
     setIsCancelling(true);
-    setCancelError(null);
     try {
       setData(await cancelOrder(order.id));
+      toast.success('Your order has been cancelled');
     } catch (err) {
-      setCancelError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     } finally {
       setIsCancelling(false);
     }
@@ -104,7 +107,6 @@ export const OrderDetailsPage: React.FC = () => {
 
       {order.status === 'pending' && (
         <div className="space-y-3">
-          {cancelError && <ErrorMessage message={cancelError} />}
           <button
             onClick={handleCancel}
             disabled={isCancelling}

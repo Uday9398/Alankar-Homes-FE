@@ -5,7 +5,6 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { clearCart } from '../../features/cart/cartSlice';
 import { createAddress, placeOrder } from '../../features/shop/shopService';
 import type { Address, ShippingDetails } from '../../features/shop/shopTypes';
-import { ErrorMessage } from '../../components/common/Feedback';
 import { ProductImage } from '../../components/common/ProductImage';
 import { Input } from '../../components/common/Input';
 import { AddressInputs } from '../../components/address/AddressInputs';
@@ -14,6 +13,7 @@ import { emptyAddress, pickAddress, trimAddress, validateAddress } from '../../c
 import { Button } from '../../components/common/Button';
 import { formatCurrency } from '../../utils/formatters';
 import { getErrorMessage } from '../../utils/helpers';
+import { useToast } from '../../hooks/useFeedback';
 import { ROUTES } from '../../utils/constants';
 
 type FieldErrors = Partial<Record<keyof ShippingDetails, string>>;
@@ -29,7 +29,7 @@ export const CheckoutPage: React.FC = () => {
   const [saveAddress, setSaveAddress] = useState(true);
   const [addressLabel, setAddressLabel] = useState('Home');
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Set once the order succeeds, so emptying the cart doesn't bounce us to /cart
   const [placedOrderId, setPlacedOrderId] = useState<number | null>(null);
@@ -73,7 +73,6 @@ export const CheckoutPage: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    setSubmitError(null);
     try {
       const order = await placeOrder({
         ...form,
@@ -86,7 +85,7 @@ export const CheckoutPage: React.FC = () => {
       setPlacedOrderId(order.id);
       dispatch(clearCart());
     } catch (err) {
-      setSubmitError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
       setIsSubmitting(false);
     }
   };
@@ -146,7 +145,6 @@ export const CheckoutPage: React.FC = () => {
             <span className="text-stone-100 font-medium">Total</span>
             <span className="text-[#ecc588] font-semibold">{formatCurrency(total)}</span>
           </div>
-          {submitError && <ErrorMessage message={submitError} />}
           <Button type="submit" isLoading={isSubmitting} disabled={addressId === undefined}>Place order</Button>
         </aside>
       </form>

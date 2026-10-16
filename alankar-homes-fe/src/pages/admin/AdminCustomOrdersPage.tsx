@@ -8,6 +8,7 @@ import { CustomStatusBadge, ErrorMessage, Spinner } from '../../components/commo
 import { ProductImage } from '../../components/common/ProductImage';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { getErrorMessage } from '../../utils/helpers';
+import { useConfirm, useToast } from '../../hooks/useFeedback';
 import { CUSTOM_STATUS_LABELS } from '../../utils/constants';
 
 const FILTERS: (CustomRequestStatus | '')[] = ['', 'pending', 'quoted', 'accepted', 'in_progress', 'shipped', 'delivered', 'cancelled'];
@@ -44,18 +45,19 @@ const RequestRow: React.FC<{ request: CustomRequest; onUpdated: (request: Custom
   const [price, setPrice] = useState(request.quotedPrice !== null ? String(request.quotedPrice) : '');
   const [note, setNote] = useState(request.adminNote || '');
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const canQuote = request.status === 'pending' || request.status === 'quoted';
 
-  const save = async (changes: CustomRequestUpdate) => {
+  const save = async (changes: CustomRequestUpdate, successMessage: string) => {
     setIsSaving(true);
-    setError(null);
     try {
       // The message box is always sent along, so it can be edited with any action
       onUpdated(await adminUpdateCustomRequest(request.id, { adminNote: note.trim(), ...changes }));
+      toast.success(successMessage);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -64,15 +66,24 @@ const RequestRow: React.FC<{ request: CustomRequest; onUpdated: (request: Custom
   const sendQuote = () => {
     const amount = Number(price);
     if (!(amount > 0)) {
-      setError('Enter a price greater than 0');
+      toast.error('Enter a price greater than 0');
       return;
     }
-    save({ quotedPrice: amount });
+    save({ quotedPrice: amount }, `Price sent for request #${request.id}`);
   };
 
-  const changeStatus = (status: CustomRequestStatus) => {
-    if (status === 'cancelled' && !window.confirm(`Cancel request #${request.id}? Add a reason in the message box so the customer knows why.`)) return;
-    save({ status });
+  const changeStatus = async (status: CustomRequestStatus) => {
+    if (status === 'cancelled') {
+      const ok = await confirm({
+        title: `Cancel request #${request.id}?`,
+        message: 'Add a reason in the message box so the customer knows why.',
+        confirmLabel: 'Cancel request',
+        cancelLabel: 'Keep request',
+        tone: 'danger',
+      });
+      if (!ok) return;
+    }
+    save({ status }, `Request #${request.id} is now ${CUSTOM_STATUS_LABELS[status].toLowerCase()}`);
   };
 
   return (
@@ -187,7 +198,7 @@ const RequestRow: React.FC<{ request: CustomRequest; onUpdated: (request: Custom
               {!canQuote && request.status !== 'delivered' && request.status !== 'cancelled' && (
                 <button
                   disabled={isSaving}
-                  onClick={() => save({})}
+                  onClick={() => save({}, 'Message saved')}
                   className="px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50 border border-[#0e3f38] text-stone-300 hover:text-[#ecc588]"
                 >
                   Save message
@@ -213,7 +224,6 @@ const RequestRow: React.FC<{ request: CustomRequest; onUpdated: (request: Custom
             {request.status === 'quoted' && (
               <p className="text-[11px] text-stone-500">Waiting for the customer to accept the price on the website.</p>
             )}
-            {error && <ErrorMessage message={error} />}
           </div>
         </div>
       )}

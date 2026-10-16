@@ -8,12 +8,14 @@ import { ErrorMessage, Spinner } from '../../components/common/Feedback';
 import { ProductImage } from '../../components/common/ProductImage';
 import { formatCurrency } from '../../utils/formatters';
 import { getErrorMessage } from '../../utils/helpers';
+import { useConfirm, useToast } from '../../hooks/useFeedback';
 import { ROUTES } from '../../utils/constants';
 
 export const AdminProductsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const toast = useToast();
+  const confirm = useConfirm();
   const { data, setData, isLoading, error, reload } = useAsync(
     () => adminFetchProducts({ search: search.trim() || undefined, page, limit: 20 }),
     [search, page]
@@ -24,22 +26,30 @@ export const AdminProductsPage: React.FC = () => {
   };
 
   const toggle = async (product: Product, field: 'isActive' | 'isFeatured') => {
-    setActionError(null);
     try {
-      replaceProduct(await updateProduct(product.id, { [field]: !product[field] }));
+      const updated = await updateProduct(product.id, { [field]: !product[field] });
+      replaceProduct(updated);
+      if (field === 'isActive') toast.success(updated.isActive ? 'Product is now visible in the shop' : 'Product hidden from the shop');
+      else toast.success(updated.isFeatured ? 'Featured on the home page' : 'Removed from the home page');
     } catch (err) {
-      setActionError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
   const handleDelete = async (product: Product) => {
-    if (!window.confirm(`Delete "${product.name}" permanently?\n\nTip: use "Hide" instead if you might sell it again.`)) return;
-    setActionError(null);
+    const ok = await confirm({
+      title: `Delete "${product.name}" permanently?`,
+      message: 'Tip: use "Hide" instead if you might sell it again.',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await deleteProduct(product.id);
+      toast.success('Product deleted');
       reload();
     } catch (err) {
-      setActionError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -69,7 +79,6 @@ export const AdminProductsPage: React.FC = () => {
         />
       </div>
 
-      {actionError && <ErrorMessage message={actionError} />}
       {isLoading && <Spinner />}
       {error && <ErrorMessage message={error} onRetry={reload} />}
 

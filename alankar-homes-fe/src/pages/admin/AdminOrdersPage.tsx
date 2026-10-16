@@ -8,6 +8,7 @@ import { ErrorMessage, Spinner, StatusBadge } from '../../components/common/Feed
 import { ProductImage } from '../../components/common/ProductImage';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { getErrorMessage } from '../../utils/helpers';
+import { useConfirm, useToast } from '../../hooks/useFeedback';
 import { ORDER_STATUS_LABELS } from '../../utils/constants';
 
 const FILTERS: (OrderStatus | '')[] = ['', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
@@ -31,16 +32,26 @@ const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
 const OrderRow: React.FC<{ order: Order; onUpdated: (order: Order) => void }> = ({ order, onUpdated }) => {
   const [open, setOpen] = useState(order.status === 'pending');
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const changeStatus = async (status: OrderStatus) => {
-    if (status === 'cancelled' && !window.confirm(`Cancel order #${order.id}? The items will go back into stock.`)) return;
+    if (status === 'cancelled') {
+      const ok = await confirm({
+        title: `Cancel order #${order.id}?`,
+        message: 'The items will go back into stock.',
+        confirmLabel: 'Cancel order',
+        cancelLabel: 'Keep order',
+        tone: 'danger',
+      });
+      if (!ok) return;
+    }
     setIsSaving(true);
-    setError(null);
     try {
       onUpdated(await updateOrderStatus(order.id, status));
+      toast.success(`Order #${order.id} is now ${ORDER_STATUS_LABELS[status].toLowerCase()}`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -113,7 +124,6 @@ const OrderRow: React.FC<{ order: Order; onUpdated: (order: Order) => void }> = 
                 ))}
               </div>
             )}
-            {error && <ErrorMessage message={error} />}
           </div>
         </div>
       )}

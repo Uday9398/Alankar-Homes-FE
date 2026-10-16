@@ -10,6 +10,7 @@ import { AddressInputs, AddressLabelPicker } from './AddressInputs';
 import { emptyAddress, labelIcon, pickAddress, trimAddress, validateAddress } from './addressUtils';
 import type { AddressErrors } from './addressUtils';
 import { getErrorMessage } from '../../utils/helpers';
+import { useConfirm, useToast } from '../../hooks/useFeedback';
 
 const MAX_ADDRESSES = 10;
 
@@ -29,8 +30,8 @@ const AddressForm: React.FC<FormProps> = ({ initial, prefill, isFirst, onSaved, 
   );
   const [isDefault, setIsDefault] = useState(initial?.isDefault ?? isFirst);
   const [errors, setErrors] = useState<AddressErrors & { label?: string }>({});
-  const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +41,6 @@ const AddressForm: React.FC<FormProps> = ({ initial, prefill, isFirst, onSaved, 
     if (Object.keys(newErrors).length > 0) return;
 
     setIsSaving(true);
-    setError(null);
     try {
       const payload = { label: label.trim(), ...trimAddress(fields), isDefault };
       if (initial) {
@@ -48,9 +48,10 @@ const AddressForm: React.FC<FormProps> = ({ initial, prefill, isFirst, onSaved, 
       } else {
         await createAddress(payload);
       }
+      toast.success(initial ? 'Address updated' : 'Address saved');
       onSaved();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
       setIsSaving(false);
     }
   };
@@ -76,7 +77,6 @@ const AddressForm: React.FC<FormProps> = ({ initial, prefill, isFirst, onSaved, 
           <span className="text-sm text-stone-200">Use as my default address</span>
         </label>
       )}
-      {error && <ErrorMessage message={error} />}
       <div className="flex gap-3">
         <Button type="submit" isLoading={isSaving} className="sm:w-auto sm:px-8">Save address</Button>
         <Button type="button" variant="outline" onClick={onCancel} className="sm:w-auto sm:px-8">Cancel</Button>
@@ -92,7 +92,8 @@ export const AddressBook: React.FC<{ suggestion?: AddressFields | null }> = ({ s
   const [editing, setEditing] = useState<'new' | number | null>(null);
   const [prefill, setPrefill] = useState<AddressFields | undefined>();
   const [busyId, setBusyId] = useState<number | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   if (isLoading) return <Spinner label="Loading addresses..." />;
   if (error || !addresses) return <ErrorMessage message={error || 'Could not load addresses'} onRetry={reload} />;
@@ -102,21 +103,26 @@ export const AddressBook: React.FC<{ suggestion?: AddressFields | null }> = ({ s
     setPrefill(undefined);
   };
 
-  const run = async (id: number, action: () => Promise<unknown>) => {
+  const run = async (id: number, action: () => Promise<unknown>, successMessage: string) => {
     setBusyId(id);
-    setActionError(null);
     try {
       await action();
+      toast.success(successMessage);
       reload();
     } catch (err) {
-      setActionError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     } finally {
       setBusyId(null);
     }
   };
 
-  const handleDelete = (address: Address) => {
-    if (window.confirm(`Delete the "${address.label}" address?`)) run(address.id, () => deleteAddress(address.id));
+  const handleDelete = async (address: Address) => {
+    const ok = await confirm({
+      title: `Delete the "${address.label}" address?`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (ok) run(address.id, () => deleteAddress(address.id), 'Address deleted');
   };
 
   if (editing !== null) {
@@ -195,7 +201,7 @@ export const AddressBook: React.FC<{ suggestion?: AddressFields | null }> = ({ s
             </div>
             {!address.isDefault && (
               <button
-                onClick={() => run(address.id, () => setDefaultAddress(address.id))}
+                onClick={() => run(address.id, () => setDefaultAddress(address.id), 'Default address updated')}
                 disabled={busyId === address.id}
                 className="text-xs font-semibold text-[#caa060] hover:text-[#ecc588] cursor-pointer disabled:opacity-50"
               >
@@ -205,8 +211,6 @@ export const AddressBook: React.FC<{ suggestion?: AddressFields | null }> = ({ s
           </div>
         );
       })}
-
-      {actionError && <ErrorMessage message={actionError} />}
 
       {addresses.length < MAX_ADDRESSES ? (
         <button

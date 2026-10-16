@@ -1,6 +1,7 @@
 import { Provider } from 'react-redux';
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import { store } from './app/store';
+import { FeedbackProvider } from './components/common/FeedbackProvider';
 import { MainLayout } from './components/layout/MainLayout';
 import { RequireAdmin, RequireAuth } from './components/layout/RouteGuards';
 import { LoginPage } from './pages/auth/LoginPage';
@@ -38,45 +39,47 @@ const NotFoundPage = () => (
 function App() {
   return (
     <Provider store={store}>
-      <BrowserRouter>
-        <Routes>
-          <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-          <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+      <FeedbackProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+            <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
 
-          <Route element={<MainLayout />}>
-            <Route path={ROUTES.HOME} element={<HomePage />} />
-            <Route path={ROUTES.PRODUCTS} element={<ProductsPage />} />
-            <Route path={ROUTES.PRODUCT_DETAILS} element={<ProductDetailsPage />} />
-            <Route path={ROUTES.CART} element={<CartPage />} />
-            <Route path={ROUTES.CUSTOM_ORDERS} element={<CustomOrdersPage />} />
+            <Route element={<MainLayout />}>
+              <Route path={ROUTES.HOME} element={<HomePage />} />
+              <Route path={ROUTES.PRODUCTS} element={<ProductsPage />} />
+              <Route path={ROUTES.PRODUCT_DETAILS} element={<ProductDetailsPage />} />
+              <Route path={ROUTES.CART} element={<CartPage />} />
+              <Route path={ROUTES.CUSTOM_ORDERS} element={<CustomOrdersPage />} />
 
-            <Route element={<RequireAuth />}>
-              <Route path={ROUTES.CHECKOUT} element={<CheckoutPage />} />
-              <Route path={ROUTES.ORDERS} element={<OrdersPage />} />
-              <Route path={ROUTES.ORDER_DETAILS} element={<OrderDetailsPage />} />
-              <Route path={ROUTES.WISHLIST} element={<WishlistPage />} />
-              <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
-              <Route path={ROUTES.NEW_CUSTOM_ORDER} element={<CustomOrderFormPage />} />
-              <Route path={ROUTES.CUSTOM_ORDER_DETAILS} element={<CustomOrderDetailsPage />} />
-            </Route>
-
-            <Route element={<RequireAdmin />}>
-              <Route element={<AdminLayout />}>
-                <Route path={ROUTES.ADMIN} element={<AdminDashboardPage />} />
-                <Route path={ROUTES.ADMIN_PRODUCTS} element={<AdminProductsPage />} />
-                <Route path={ROUTES.ADMIN_NEW_PRODUCT} element={<AdminProductFormPage />} />
-                <Route path={ROUTES.ADMIN_EDIT_PRODUCT} element={<AdminProductFormPage />} />
-                <Route path={ROUTES.ADMIN_CATEGORIES} element={<AdminCategoriesPage />} />
-                <Route path={ROUTES.ADMIN_ORDERS} element={<AdminOrdersPage />} />
-                <Route path={ROUTES.ADMIN_CUSTOM_ORDERS} element={<AdminCustomOrdersPage />} />
-                <Route path={ROUTES.ADMIN_USERS} element={<AdminUsersPage />} />
+              <Route element={<RequireAuth />}>
+                <Route path={ROUTES.CHECKOUT} element={<CheckoutPage />} />
+                <Route path={ROUTES.ORDERS} element={<OrdersPage />} />
+                <Route path={ROUTES.ORDER_DETAILS} element={<OrderDetailsPage />} />
+                <Route path={ROUTES.WISHLIST} element={<WishlistPage />} />
+                <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+                <Route path={ROUTES.NEW_CUSTOM_ORDER} element={<CustomOrderFormPage />} />
+                <Route path={ROUTES.CUSTOM_ORDER_DETAILS} element={<CustomOrderDetailsPage />} />
               </Route>
-            </Route>
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+              <Route element={<RequireAdmin />}>
+                <Route element={<AdminLayout />}>
+                  <Route path={ROUTES.ADMIN} element={<AdminDashboardPage />} />
+                  <Route path={ROUTES.ADMIN_PRODUCTS} element={<AdminProductsPage />} />
+                  <Route path={ROUTES.ADMIN_NEW_PRODUCT} element={<AdminProductFormPage />} />
+                  <Route path={ROUTES.ADMIN_EDIT_PRODUCT} element={<AdminProductFormPage />} />
+                  <Route path={ROUTES.ADMIN_CATEGORIES} element={<AdminCategoriesPage />} />
+                  <Route path={ROUTES.ADMIN_ORDERS} element={<AdminOrdersPage />} />
+                  <Route path={ROUTES.ADMIN_CUSTOM_ORDERS} element={<AdminCustomOrdersPage />} />
+                  <Route path={ROUTES.ADMIN_USERS} element={<AdminUsersPage />} />
+                </Route>
+              </Route>
+
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </FeedbackProvider>
     </Provider>
   );
 }
